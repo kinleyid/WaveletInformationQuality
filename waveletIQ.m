@@ -51,9 +51,8 @@ for step = 1:nsteps
             end
             curr_H = N*ent(coeffs, nbins) - (N - 1)/N*jk_H;    
     end
-	
-	% Append current estimate
-	H_estimates(step) = curr_H;
+    % Append current estimate
+    H_estimates(step) = curr_H;
 end
 
 H = mean(H_estimates);
