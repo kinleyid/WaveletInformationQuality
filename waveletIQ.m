@@ -1,4 +1,4 @@
-function H = waveletIQ(signal, nlevels, wname, nbins, wlen, wstep, entbc)
+function H = waveletIQ(signal, nlevels, wname, nbins, logbase, wlen, wstep, entbc)
 
 % Wavelet information quality, per Slobounov, Cao, & Sebastianelli (2009)
 
@@ -7,6 +7,7 @@ function H = waveletIQ(signal, nlevels, wname, nbins, wlen, wstep, entbc)
 %   nlevels: number of DWT decomposition levels
 %   wname: name of DWT wavelet to use (input to Matlab's wavedec function)
 %   nbins: number of bins for entropy calculations
+%   logbase: base of logarithm for entropy calculations
 %   slen: sliding window length in units of datapoints
 %   step: sliding window step size in units of datapoints
 %   entbc: entropy bias correction technique
@@ -36,9 +37,9 @@ for step = 1:nsteps
     N = numel(coeffs); % Number of datapoints
     switch lower(entbc)
         case 'none' % Plug-in entropy estimate
-            curr_H = ent(coeffs, nbins);
+            curr_H = ent(coeffs, nbins, logbase);
         case 'mm' % Miller-Madow entropy estimate
-            [curr_H, p] = ent(coeffs, nbins);
+            [curr_H, p] = ent(coeffs, nbins, logbase);
             curr_H = curr_H - (nnz(p) - 1)/2/N;
         case 'jk' % Jackknifed entropy estimate
             jk_H = 0;
@@ -47,7 +48,7 @@ for step = 1:nsteps
                 idx = true(1, numel(coeffs));
                 idx(j) = false;
 				% Use plug-in estimate 
-                jk_H = jk_H + ent(coeffs(idx), nbins);
+                jk_H = jk_H + ent(coeffs(idx), nbins, logbase);
             end
             curr_H = N*ent(coeffs, nbins) - (N - 1)/N*jk_H;    
     end
@@ -59,13 +60,13 @@ H = mean(H_estimates);
 
 end
 
-function [H, p] = ent(data, nbins)
+function [H, p] = ent(data, nbins, logbase)
 
 % Plug-in entropy estimate
 
 counts = histcounts(data, nbins);
 nzidx = counts ~= 0;
 p = counts / sum(counts);
-H = -sum(p(nzidx).*log(p(nzidx)));
+H = -sum(p(nzidx) .* log(p(nzidx))/log(logbase));
 
 end
